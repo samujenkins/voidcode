@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Leitor de Código de Barras</title>
+  <title>Leitor de Código de Barras e QR Code</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -27,6 +27,8 @@
       margin-left: auto;
       margin-right: auto;
       text-align: left;
+      font-size: 16px;
+      word-wrap: break-word;
     }
     button {
       margin-top: 15px;
@@ -45,11 +47,11 @@
 </head>
 <body>
 
-  <h1>📦 Leitor de Código de Barras</h1>
-  <p>Aponte a câmera para o código de barras</p>
+  <h1>📦 Leitor de Código de Barras e QR Code</h1>
+  <p>Aponte a câmera para o código de barras ou QR Code</p>
 
   <!-- Local onde vai aparecer o vídeo -->
-  <div id="camera"></div>
+  <video id="video" autoplay></video>
 
   <!-- Resultados -->
   <div id="resultados"><strong>Resultados:</strong><br></div>
@@ -57,40 +59,37 @@
   <!-- Botão para salvar em TXT -->
   <button onclick="salvarTXT()">Salvar em TXT</button>
 
-  <!-- Importando QuaggaJS (API gratuita) -->
-  <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
+  <!-- Importando ZXing-js -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
     let codigosLidos = [];
+    const video = document.getElementById("video");
+    const resultados = document.getElementById("resultados");
 
-    // Inicializa o Quagga
-    Quagga.init({
-      inputStream: {
-        type: "LiveStream",
-        target: document.querySelector("#camera"),
-        constraints: {
-          facingMode: "environment" // câmera traseira (celular)
+    // Inicializa leitor
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+
+    // Acessar câmera
+    codeReader
+      .listVideoInputDevices()
+      .then(videoInputDevices => {
+        if (videoInputDevices.length > 0) {
+          // Se tiver mais de uma câmera, usa a traseira
+          let deviceId = videoInputDevices[videoInputDevices.length - 1].deviceId;
+          codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
+            if (result) {
+              let codigo = result.text;
+              if (!codigosLidos.includes(codigo)) {
+                codigosLidos.push(codigo);
+                resultados.innerHTML += codigo + "<br>";
+              }
+            }
+          });
+        } else {
+          alert("Nenhuma câmera encontrada!");
         }
-      },
-      decoder: {
-        readers: ["code_128_reader", "ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader"]
-      }
-    }, function(err) {
-      if (err) {
-        console.error(err);
-        alert("Erro ao iniciar câmera: " + err);
-        return;
-      }
-      Quagga.start();
-    });
-
-    // Quando detectar código
-    Quagga.onDetected(function(data) {
-      let codigo = data.codeResult.code;
-      if (!codigosLidos.includes(codigo)) {
-        codigosLidos.push(codigo);
-        document.getElementById("resultados").innerHTML += codigo + "<br>";
-      }
-    });
+      })
+      .catch(err => console.error(err));
 
     // Função para salvar em TXT
     function salvarTXT() {
@@ -102,7 +101,7 @@
       let blob = new Blob([conteudo], { type: "text/plain" });
       let link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "codigos_barras.txt";
+      link.download = "codigos_lidos.txt";
       link.click();
     }
   </script>
