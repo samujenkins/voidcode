@@ -2,86 +2,145 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Leitor de Código de Barras e QR Code</title>
+  <title>Leitor Cyberpunk de Código & QR</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f4f4f4;
+    /* --- Fonte e reset --- */
+    * {
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      box-sizing: border-box;
     }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #091833, #133e7c);
+      color: #ea00d9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* --- Cabeçalho --- */
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #0abdc6;
+      text-shadow: 0 0 8px #0abdc6, 0 0 16px #ea00d9;
+      animation: glow 2s infinite alternate;
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 8px #0abdc6, 0 0 16px #ea00d9; }
+      to   { text-shadow: 0 0 16px #ea00d9, 0 0 24px #0abdc6; }
+    }
+
+    p {
+      margin-bottom: 15px;
+      font-size: 1rem;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    /* --- Câmera --- */
     video {
       width: 100%;
       max-width: 500px;
-      border: 2px solid #333;
-      border-radius: 10px;
-      margin-top: 20px;
+      border: 2px solid #0abdc6;
+      border-radius: 12px;
+      margin-top: 10px;
+      box-shadow: 0 0 25px #0abdc6, 0 0 40px #ea00d9;
+      animation: pulse 3s infinite;
     }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 15px #0abdc6, 0 0 25px #ea00d9; }
+      50% { box-shadow: 0 0 25px #ea00d9, 0 0 45px #0abdc6; }
+    }
+
+    /* --- Resultados --- */
     #resultados {
       margin-top: 20px;
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
+      background-color: rgba(19, 62, 124, 0.9);
+      padding: 15px;
+      border-radius: 10px;
       max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: left;
+      width: 90%;
       font-size: 16px;
-      word-wrap: break-word;
+      color: #ffffff;
+      box-shadow: 0 0 15px #711c91;
+      backdrop-filter: blur(6px);
+      text-align: left;
     }
+    #resultados strong {
+      color: #0abdc6;
+      font-size: 18px;
+    }
+
+    /* --- Botão --- */
     button {
-      margin-top: 15px;
-      padding: 10px 20px;
+      margin-top: 20px;
+      padding: 12px 24px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      background: #4CAF50;
-      color: white;
+      background-color: #ea00d9;
+      color: #ffffff;
+      box-shadow: 0 0 10px #ea00d9, 0 0 20px #0abdc6;
+      transition: all 0.3s ease-in-out;
     }
     button:hover {
-      background: #45a049;
+      background-color: #0abdc6;
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #0abdc6, 0 0 40px #ea00d9;
+    }
+
+    /* --- Responsividade --- */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+      p {
+        font-size: 0.9rem;
+      }
+      button {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
 
-  <h1>📦 Leitor de Código de Barras e QR Code</h1>
+  <h1>📦 Leitor Cyberpunk</h1>
   <p>Aponte a câmera para o código de barras ou QR Code</p>
 
-  <!-- Local onde vai aparecer o vídeo -->
   <video id="video" autoplay></video>
 
-  <!-- Resultados -->
   <div id="resultados"><strong>Resultados:</strong><br></div>
 
-  <!-- Botão para salvar em TXT -->
-  <button onclick="salvarTXT()">Salvar em TXT</button>
+  <button onclick="salvarTXT()">💾 Salvar em TXT</button>
 
-  <!-- Importando ZXing-js -->
+  <!-- ZXing para leitura de códigos -->
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <script>
     let codigosLidos = [];
     const video = document.getElementById("video");
     const resultados = document.getElementById("resultados");
 
-    // Inicializa leitor
     const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    // Acessar câmera
+    // Inicializa câmera
     codeReader
       .listVideoInputDevices()
       .then(videoInputDevices => {
         if (videoInputDevices.length > 0) {
-          // Se tiver mais de uma câmera, usa a traseira
           let deviceId = videoInputDevices[videoInputDevices.length - 1].deviceId;
           codeReader.decodeFromVideoDevice(deviceId, video, (result, err) => {
             if (result) {
               let codigo = result.text;
               if (!codigosLidos.includes(codigo)) {
                 codigosLidos.push(codigo);
-                resultados.innerHTML += codigo + "<br>";
+                resultados.innerHTML += `<span style="color:#0abdc6;">${codigo}</span><br>`;
               }
             }
           });
@@ -91,7 +150,7 @@
       })
       .catch(err => console.error(err));
 
-    // Função para salvar em TXT
+    // Salvar TXT
     function salvarTXT() {
       if (codigosLidos.length === 0) {
         alert("Nenhum código lido ainda!");
